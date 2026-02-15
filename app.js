@@ -66,7 +66,7 @@
         <div class="product-location">
           <div class="aisle-label">Aisle</div>
           <div class="aisle-num">${esc(p.aisle)}</div>
-          <div class="bay-label">Bay ${esc(p.bay)}</div>
+          ${p.bay ? `<div class="bay-label">Bay ${esc(p.bay)}</div>` : ''}
         </div>
         <div class="product-info">
           <div class="name">${esc(p.name)}</div>
