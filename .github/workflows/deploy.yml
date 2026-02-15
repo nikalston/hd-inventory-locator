@@ -21,6 +21,10 @@ jobs:
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - uses: actions/checkout@v4
+      - name: Inject version
+        run: |
+          VERSION=$(git log -1 --format='%cd' --date=format:'%Y-%m-%d %H:%M')
+          sed -i "s/__VERSION__/v$VERSION/" index.html
       - uses: actions/configure-pages@v4
       - uses: actions/upload-pages-artifact@v3
         with:
