@@ -39,9 +39,11 @@
   // --- Render ---
   function render() {
     const query = searchInput.value.trim().toLowerCase();
-    let filtered = products.slice().sort((a, b) =>
-      a.name.localeCompare(b.name, undefined, { sensitivity: 'base' })
-    );
+    let filtered = products.slice().sort((a, b) => {
+      const aisleDiff = (parseInt(a.aisle, 10) || 0) - (parseInt(b.aisle, 10) || 0);
+      if (aisleDiff !== 0) return aisleDiff;
+      return a.name.localeCompare(b.name, undefined, { sensitivity: 'base' });
+    });
 
     if (query) {
       filtered = filtered.filter(p =>
