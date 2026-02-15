@@ -42,10 +42,16 @@ header h1 {
   text-align: center;
 }
 
-header h1 .version {
-  font-size: 11px;
-  font-weight: 400;
-  opacity: 0.7;
+footer {
+  text-align: center;
+  padding: 24px 16px;
+  color: var(--text-light);
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+footer .version {
+  opacity: 0.6;
 }
 
 .search-wrap input {
