@@ -135,14 +135,16 @@
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(products),
         });
+        // Try Location header first, fall back to x-jsonblob-id
         const location = res.headers.get('Location');
-        if (location) {
-          const newBlobId = location.split('/').pop();
+        const xBlobId = res.headers.get('X-jsonblob-id');
+        const newBlobId = xBlobId || (location ? location.split('/').pop() : null);
+        if (newBlobId) {
           await putSetting('blobId', newBlobId);
         }
       }
-    } catch {
-      // sync failed silently — offline or network error
+    } catch (e) {
+      alert('Sync error: ' + e.message);
     }
   }
 
