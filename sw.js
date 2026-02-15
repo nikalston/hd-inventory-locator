@@ -1,4 +1,4 @@
-const CACHE_NAME = 'hd-locator-v1';
+const CACHE_NAME = 'hd-locator-v__CACHE_VERSION__';
 const ASSETS = [
   './',
   './index.html',
