@@ -342,6 +342,63 @@ main {
   background: #e8e8e8;
 }
 
+/* Sync modal */
+.sync-content {
+  text-align: left;
+}
+
+.sync-status {
+  font-size: 14px;
+  color: var(--text-light);
+  margin-bottom: 16px;
+}
+
+.sync-key-display {
+  margin-bottom: 16px;
+}
+
+.sync-key-display label,
+.sync-link-section label {
+  display: block;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-light);
+  margin-bottom: 4px;
+}
+
+.sync-key-row {
+  display: flex;
+  gap: 8px;
+}
+
+.sync-key-row input {
+  flex: 1;
+  padding: 10px 12px;
+  border: 1.5px solid var(--border);
+  border-radius: 8px;
+  font-size: 14px;
+  font-family: monospace;
+  outline: none;
+}
+
+.sync-key-row input:focus {
+  border-color: var(--orange);
+}
+
+.sync-key-row button {
+  padding: 10px 16px;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.sync-link-section {
+  margin-bottom: 8px;
+}
+
 .hidden {
   display: none;
 }

@@ -68,7 +68,33 @@
   <div class="data-actions">
     <button id="exportBtn" class="btn-data">Export Data</button>
     <button id="importBtn" class="btn-data">Import Data</button>
+    <button id="syncBtn" class="btn-data">Sync Key</button>
     <input type="file" id="importFile" accept=".json" hidden>
+  </div>
+
+  <div id="syncModal" class="modal hidden">
+    <div class="modal-backdrop"></div>
+    <div class="modal-content sync-content">
+      <h2>Cloud Sync</h2>
+      <div id="syncStatus" class="sync-status">Checking...</div>
+      <div id="syncKeyDisplay" class="sync-key-display hidden">
+        <label>Your Sync Key</label>
+        <div class="sync-key-row">
+          <input type="text" id="syncKeyValue" readonly>
+          <button type="button" id="syncCopyBtn" class="btn-secondary">Copy</button>
+        </div>
+      </div>
+      <div class="sync-link-section">
+        <label>Link Another Device</label>
+        <div class="sync-key-row">
+          <input type="text" id="syncKeyInput" placeholder="Paste sync key here">
+          <button type="button" id="syncLinkBtn" class="btn-primary">Link</button>
+        </div>
+      </div>
+      <div class="modal-actions">
+        <button type="button" id="syncCloseBtn" class="btn-secondary">Close</button>
+      </div>
+    </div>
   </div>
 
   <footer>
