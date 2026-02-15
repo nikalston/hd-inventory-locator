@@ -319,12 +319,17 @@
   async function openSyncModal() {
     syncModal.classList.remove('hidden');
     syncKeyInput.value = '';
-    const blobId = await getSetting('blobId');
-    if (blobId) {
-      syncStatus.textContent = 'Syncing to cloud.';
-      syncKeyDisplay.classList.remove('hidden');
-      syncKeyValue.value = blobId;
-    } else {
+    try {
+      const blobId = await getSetting('blobId');
+      if (blobId) {
+        syncStatus.textContent = 'Syncing to cloud.';
+        syncKeyDisplay.classList.remove('hidden');
+        syncKeyValue.value = blobId;
+      } else {
+        syncStatus.textContent = 'Not synced yet. A sync key will be created on your next data change, or paste one below to link.';
+        syncKeyDisplay.classList.add('hidden');
+      }
+    } catch {
       syncStatus.textContent = 'Not synced yet. A sync key will be created on your next data change, or paste one below to link.';
       syncKeyDisplay.classList.add('hidden');
     }
