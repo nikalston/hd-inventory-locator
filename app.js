@@ -1,5 +1,7 @@
 (() => {
-  const STORAGE_KEY = 'hd_products';
+  const DB_NAME = 'hd_locator';
+  const STORE_NAME = 'products';
+  const LS_KEY = 'hd_products';
 
   // DOM refs
   const searchInput = document.getElementById('searchInput');
@@ -18,22 +20,80 @@
   const confirmModal = document.getElementById('confirmModal');
   const confirmCancel = document.getElementById('confirmCancel');
   const confirmDelete = document.getElementById('confirmDelete');
+  const exportBtn = document.getElementById('exportBtn');
+  const importBtn = document.getElementById('importBtn');
+  const importFile = document.getElementById('importFile');
 
   let products = [];
+  let db = null;
   let deleteTargetId = null;
 
-  // --- Storage ---
-  function load() {
-    try {
-      const data = JSON.parse(localStorage.getItem(STORAGE_KEY));
-      products = Array.isArray(data) ? data : [];
-    } catch {
-      products = [];
-    }
+  // --- IndexedDB ---
+  function openDB() {
+    return new Promise((resolve, reject) => {
+      const request = indexedDB.open(DB_NAME, 1);
+      request.onupgradeneeded = () => {
+        request.result.createObjectStore(STORE_NAME, { keyPath: 'id' });
+      };
+      request.onsuccess = () => resolve(request.result);
+      request.onerror = () => reject(request.error);
+    });
   }
 
-  function save() {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(products));
+  function loadAll() {
+    return new Promise((resolve, reject) => {
+      const tx = db.transaction(STORE_NAME, 'readonly');
+      const store = tx.objectStore(STORE_NAME);
+      const request = store.getAll();
+      request.onsuccess = () => resolve(request.result);
+      request.onerror = () => reject(request.error);
+    });
+  }
+
+  function putProduct(product) {
+    return new Promise((resolve, reject) => {
+      const tx = db.transaction(STORE_NAME, 'readwrite');
+      const store = tx.objectStore(STORE_NAME);
+      const request = store.put(product);
+      request.onsuccess = () => resolve();
+      request.onerror = () => reject(request.error);
+    });
+  }
+
+  function removeProduct(id) {
+    return new Promise((resolve, reject) => {
+      const tx = db.transaction(STORE_NAME, 'readwrite');
+      const store = tx.objectStore(STORE_NAME);
+      const request = store.delete(id);
+      request.onsuccess = () => resolve();
+      request.onerror = () => reject(request.error);
+    });
+  }
+
+  function clearStore() {
+    return new Promise((resolve, reject) => {
+      const tx = db.transaction(STORE_NAME, 'readwrite');
+      const store = tx.objectStore(STORE_NAME);
+      const request = store.clear();
+      request.onsuccess = () => resolve();
+      request.onerror = () => reject(request.error);
+    });
+  }
+
+  // --- Migration from localStorage ---
+  async function migrateFromLocalStorage() {
+    try {
+      const raw = localStorage.getItem(LS_KEY);
+      if (!raw) return;
+      const data = JSON.parse(raw);
+      if (!Array.isArray(data) || data.length === 0) return;
+      for (const item of data) {
+        await putProduct(item);
+      }
+      localStorage.removeItem(LS_KEY);
+    } catch {
+      // migration failed silently — localStorage data stays as fallback
+    }
   }
 
   // --- Render ---
@@ -108,7 +168,7 @@
   }
 
   // --- CRUD ---
-  function saveProduct() {
+  async function saveProduct() {
     const id = productId.value;
     const data = {
       name: productName.value.trim(),
@@ -121,24 +181,55 @@
       const idx = products.findIndex(p => p.id === id);
       if (idx !== -1) {
         products[idx] = { ...products[idx], ...data };
+        await putProduct(products[idx]);
       }
     } else {
-      products.push({
+      const product = {
         id: crypto.randomUUID(),
         ...data,
         createdAt: new Date().toISOString(),
-      });
+      };
+      products.push(product);
+      await putProduct(product);
     }
 
-    save();
     render();
     closeModal();
   }
 
-  function deleteProduct(id) {
+  async function deleteProduct(id) {
     products = products.filter(p => p.id !== id);
-    save();
+    await removeProduct(id);
     render();
+  }
+
+  // --- Export / Import ---
+  function exportData() {
+    const json = JSON.stringify(products, null, 2);
+    const blob = new Blob([json], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'hd-products.json';
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  async function importData(file) {
+    try {
+      const text = await file.text();
+      const data = JSON.parse(text);
+      if (!Array.isArray(data)) throw new Error('Invalid format');
+      await clearStore();
+      for (const item of data) {
+        if (!item.id || !item.name) continue;
+        await putProduct(item);
+      }
+      products = await loadAll();
+      render();
+    } catch {
+      alert('Failed to import. Make sure the file is a valid HD products JSON export.');
+    }
   }
 
   // --- Events ---
@@ -189,12 +280,34 @@
     confirmModal.classList.add('hidden');
   });
 
-  // --- Init ---
-  load();
-  render();
+  exportBtn.addEventListener('click', exportData);
 
-  // Register service worker
-  if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('sw.js');
+  importBtn.addEventListener('click', () => importFile.click());
+
+  importFile.addEventListener('change', () => {
+    if (importFile.files.length > 0) {
+      importData(importFile.files[0]);
+      importFile.value = '';
+    }
+  });
+
+  // --- Init ---
+  async function init() {
+    db = await openDB();
+    await migrateFromLocalStorage();
+    products = await loadAll();
+    render();
+
+    // Request persistent storage
+    if (navigator.storage && navigator.storage.persist) {
+      navigator.storage.persist();
+    }
+
+    // Register service worker
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('sw.js');
+    }
   }
+
+  init();
 })();

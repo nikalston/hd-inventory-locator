@@ -320,6 +320,28 @@ main {
   margin-bottom: 4px;
 }
 
+.data-actions {
+  display: flex;
+  gap: 10px;
+  padding: 16px 16px 0;
+  justify-content: center;
+}
+
+.btn-data {
+  padding: 10px 20px;
+  background: none;
+  border: 1.5px solid var(--border);
+  border-radius: 8px;
+  font-size: 14px;
+  color: var(--text-light);
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.btn-data:active {
+  background: #e8e8e8;
+}
+
 .hidden {
   display: none;
 }
