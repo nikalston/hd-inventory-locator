@@ -160,7 +160,7 @@
       productId.value = '';
     }
     modal.classList.remove('hidden');
-    setTimeout(() => productName.focus(), 100);
+    productName.focus();
   }
 
   function closeModal() {
