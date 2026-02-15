@@ -4,7 +4,6 @@
   const STORE_NAME = 'products';
   const SETTINGS_STORE = 'settings';
   const LS_KEY = 'hd_products';
-  const JSONBLOB_BASE = 'https://jsonblob.com/api/jsonBlob';
 
   // DOM refs
   const searchInput = document.getElementById('searchInput');
@@ -26,15 +25,6 @@
   const exportBtn = document.getElementById('exportBtn');
   const importBtn = document.getElementById('importBtn');
   const importFile = document.getElementById('importFile');
-  const syncBtn = document.getElementById('syncBtn');
-  const syncModal = document.getElementById('syncModal');
-  const syncStatus = document.getElementById('syncStatus');
-  const syncKeyDisplay = document.getElementById('syncKeyDisplay');
-  const syncKeyValue = document.getElementById('syncKeyValue');
-  const syncCopyBtn = document.getElementById('syncCopyBtn');
-  const syncKeyInput = document.getElementById('syncKeyInput');
-  const syncLinkBtn = document.getElementById('syncLinkBtn');
-  const syncCloseBtn = document.getElementById('syncCloseBtn');
 
   let products = [];
   let db = null;
@@ -96,70 +86,6 @@
       request.onsuccess = () => resolve();
       request.onerror = () => reject(request.error);
     });
-  }
-
-  // --- Settings store ---
-  function getSetting(key) {
-    return new Promise((resolve, reject) => {
-      const tx = db.transaction(SETTINGS_STORE, 'readonly');
-      const store = tx.objectStore(SETTINGS_STORE);
-      const request = store.get(key);
-      request.onsuccess = () => resolve(request.result ? request.result.value : null);
-      request.onerror = () => reject(request.error);
-    });
-  }
-
-  function putSetting(key, value) {
-    return new Promise((resolve, reject) => {
-      const tx = db.transaction(SETTINGS_STORE, 'readwrite');
-      const store = tx.objectStore(SETTINGS_STORE);
-      const request = store.put({ key, value });
-      request.onsuccess = () => resolve();
-      request.onerror = () => reject(request.error);
-    });
-  }
-
-  // --- Cloud sync ---
-  async function syncToCloud() {
-    try {
-      const blobId = await getSetting('blobId');
-      if (blobId) {
-        await fetch(`${JSONBLOB_BASE}/${blobId}`, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(products),
-        });
-      } else {
-        const res = await fetch(JSONBLOB_BASE, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(products),
-        });
-        // Try Location header first, fall back to x-jsonblob-id
-        const location = res.headers.get('Location');
-        const xBlobId = res.headers.get('X-jsonblob-id');
-        const newBlobId = xBlobId || (location ? location.split('/').pop() : null);
-        if (newBlobId) {
-          await putSetting('blobId', newBlobId);
-        }
-      }
-    } catch (e) {
-      alert('Sync error: ' + e.message);
-    }
-  }
-
-  async function syncFromCloud(blobId) {
-    const res = await fetch(`${JSONBLOB_BASE}/${blobId}`);
-    if (!res.ok) throw new Error('Failed to fetch blob');
-    const data = await res.json();
-    if (!Array.isArray(data)) throw new Error('Invalid blob data');
-    await clearStore();
-    for (const item of data) {
-      if (!item.id || !item.name) continue;
-      await putProduct(item);
-    }
-    products = await loadAll();
-    render();
   }
 
   // --- Migration from localStorage ---
@@ -277,14 +203,12 @@
 
     render();
     closeModal();
-    syncToCloud();
   }
 
   async function deleteProduct(id) {
     products = products.filter(p => p.id !== id);
     await removeProduct(id);
     render();
-    syncToCloud();
   }
 
   // --- Export / Import ---
@@ -311,51 +235,8 @@
       }
       products = await loadAll();
       render();
-      syncToCloud();
     } catch {
       alert('Failed to import. Make sure the file is a valid HD products JSON export.');
-    }
-  }
-
-  // --- Sync modal ---
-  async function openSyncModal() {
-    syncModal.classList.remove('hidden');
-    syncKeyInput.value = '';
-    try {
-      const blobId = await getSetting('blobId');
-      if (blobId) {
-        syncStatus.textContent = 'Syncing to cloud.';
-        syncKeyDisplay.classList.remove('hidden');
-        syncKeyValue.value = blobId;
-      } else {
-        syncStatus.textContent = 'Not synced yet. A sync key will be created on your next data change, or paste one below to link.';
-        syncKeyDisplay.classList.add('hidden');
-      }
-    } catch {
-      syncStatus.textContent = 'Not synced yet. A sync key will be created on your next data change, or paste one below to link.';
-      syncKeyDisplay.classList.add('hidden');
-    }
-  }
-
-  function closeSyncModal() {
-    syncModal.classList.add('hidden');
-  }
-
-  async function linkSyncKey() {
-    const key = syncKeyInput.value.trim();
-    if (!key) return;
-    syncLinkBtn.disabled = true;
-    syncLinkBtn.textContent = 'Linking...';
-    try {
-      await putSetting('blobId', key);
-      await syncFromCloud(key);
-      syncLinkBtn.textContent = 'Link';
-      syncLinkBtn.disabled = false;
-      closeSyncModal();
-    } catch {
-      alert('Failed to fetch data with that sync key. Check the key and try again.');
-      syncLinkBtn.textContent = 'Link';
-      syncLinkBtn.disabled = false;
     }
   }
 
@@ -418,37 +299,12 @@
     }
   });
 
-  syncBtn.addEventListener('click', openSyncModal);
-
-  syncCloseBtn.addEventListener('click', closeSyncModal);
-
-  syncModal.querySelector('.modal-backdrop').addEventListener('click', closeSyncModal);
-
-  syncCopyBtn.addEventListener('click', () => {
-    navigator.clipboard.writeText(syncKeyValue.value).then(() => {
-      syncCopyBtn.textContent = 'Copied!';
-      setTimeout(() => { syncCopyBtn.textContent = 'Copy'; }, 1500);
-    });
-  });
-
-  syncLinkBtn.addEventListener('click', linkSyncKey);
-
   // --- Init ---
   async function init() {
     db = await openDB();
     await migrateFromLocalStorage();
     products = await loadAll();
     render();
-
-    // Auto-sync from cloud on startup if we have a blob ID
-    const blobId = await getSetting('blobId');
-    if (blobId) {
-      try {
-        await syncFromCloud(blobId);
-      } catch {
-        // offline or blob expired — use local data
-      }
-    }
 
     // Request persistent storage
     if (navigator.storage && navigator.storage.persist) {
