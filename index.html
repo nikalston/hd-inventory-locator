@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="HD Locator">
+  <meta name="theme-color" content="#F96302">
+  <title>HD Inventory Locator</title>
+  <link rel="manifest" href="manifest.json">
+  <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect fill='%23F96302' width='100' height='100' rx='20'/><text x='50' y='68' font-size='50' text-anchor='middle' fill='white' font-family='Arial,sans-serif' font-weight='bold'>HD</text></svg>">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header>
+    <h1>HD Inventory Locator</h1>
+    <div class="search-wrap">
+      <input type="search" id="searchInput" placeholder="Search products..." autocomplete="off">
+    </div>
+  </header>
+
+  <main id="main">
+    <button id="addBtn" class="add-btn">+ Add Product</button>
+    <div id="productList" class="product-list"></div>
+    <p id="emptyState" class="empty-state">No products yet. Tap "Add Product" to get started.</p>
+  </main>
+
+  <div id="modal" class="modal hidden">
+    <div class="modal-backdrop"></div>
+    <div class="modal-content">
+      <h2 id="modalTitle">Add Product</h2>
+      <form id="productForm">
+        <input type="hidden" id="productId">
+        <label for="productName">Product Name</label>
+        <input type="text" id="productName" required placeholder="e.g. 2x4 Lumber" autocomplete="off">
+        <div class="row">
+          <div class="field">
+            <label for="productAisle">Aisle</label>
+            <input type="text" id="productAisle" required placeholder="e.g. 21" autocomplete="off">
+          </div>
+          <div class="field">
+            <label for="productBay">Bay</label>
+            <input type="text" id="productBay" required placeholder="e.g. 3" autocomplete="off">
+          </div>
+        </div>
+        <label for="productNotes">Notes (optional)</label>
+        <textarea id="productNotes" rows="2" placeholder="e.g. Near the back"></textarea>
+        <div class="modal-actions">
+          <button type="button" id="cancelBtn" class="btn-secondary">Cancel</button>
+          <button type="submit" class="btn-primary">Save</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div id="confirmModal" class="modal hidden">
+    <div class="modal-backdrop"></div>
+    <div class="modal-content confirm-content">
+      <p>Delete this product?</p>
+      <div class="modal-actions">
+        <button id="confirmCancel" class="btn-secondary">Cancel</button>
+        <button id="confirmDelete" class="btn-danger">Delete</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
