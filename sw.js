@@ -1,4 +1,4 @@
-const CACHE_NAME = 'hd-locator-v__CACHE_VERSION__';
+const CACHE_NAME = 'hd-locator-v1';
 const ASSETS = [
   './',
   './index.html',
@@ -26,6 +26,12 @@ self.addEventListener('activate', e => {
 self.addEventListener('fetch', e => {
   if (e.request.method !== 'GET' || !e.request.url.startsWith(self.location.origin)) return;
   e.respondWith(
-    caches.match(e.request).then(cached => cached || fetch(e.request))
+    fetch(e.request)
+      .then(response => {
+        const clone = response.clone();
+        caches.open(CACHE_NAME).then(cache => cache.put(e.request, clone));
+        return response;
+      })
+      .catch(() => caches.match(e.request))
   );
 });
