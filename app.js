@@ -7,6 +7,7 @@
 
   // DOM refs
   const searchInput = document.getElementById('searchInput');
+  const clearSearch = document.getElementById('clearSearch');
   const addBtn = document.getElementById('addBtn');
   const productList = document.getElementById('productList');
   const emptyState = document.getElementById('emptyState');
@@ -241,7 +242,17 @@
   }
 
   // --- Events ---
-  searchInput.addEventListener('input', render);
+  searchInput.addEventListener('input', () => {
+    clearSearch.classList.toggle('hidden', !searchInput.value);
+    render();
+  });
+
+  clearSearch.addEventListener('click', () => {
+    searchInput.value = '';
+    clearSearch.classList.add('hidden');
+    render();
+    searchInput.focus();
+  });
 
   addBtn.addEventListener('click', () => openModal(null));
 
